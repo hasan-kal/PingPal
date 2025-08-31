@@ -30,4 +30,23 @@ for (const file of eventFiles) {
   }
 }
 
+client.once("ready", () => {
+  console.log(`✅ Logged in as ${client.user.tag}`);
+
+  client.guilds.cache.forEach(guild => {
+    if (!guild.channels.cache.find(ch => ch.name === "logs")) {
+      guild.channels.create({
+        name: "logs",
+        type: 0, // 0 = text channel
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id,
+            deny: ["SendMessages"],
+          },
+        ],
+      }).then(channel => console.log(`📑 Logs channel created in ${guild.name}`));
+    }
+  });
+});
+
 client.login(process.env.DISCORD_TOKEN);
