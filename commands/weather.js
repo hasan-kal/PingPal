@@ -7,7 +7,7 @@ module.exports = {
     if (!args[0]) return message.reply("⚠️ Please provide a city name. Example: `!weather London`");
 
     const city = args.join(" ");
-    const apiKey = process.env.OPENWEATHER_KEY;
+    const apiKey = process.env.OPENWEATHER_API_KEY;
 
     try {
       const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
