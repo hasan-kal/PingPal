@@ -33,18 +33,30 @@ for (const file of eventFiles) {
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
-  client.guilds.cache.forEach(guild => {
-    if (!guild.channels.cache.find(ch => ch.name === "logs")) {
-      guild.channels.create({
-        name: "logs",
-        type: 0, // 0 = text channel
-        permissionOverwrites: [
-          {
-            id: guild.roles.everyone.id,
-            deny: ["SendMessages"],
-          },
-        ],
-      }).then(channel => console.log(`📑 Logs channel created in ${guild.name}`));
+  client.guilds.cache.forEach(async guild => {
+    // Try to find an existing logs channel
+    const existingLogChannel = guild.channels.cache.find(ch =>
+      ["logs", "mod-logs", "admin-logs"].includes(ch.name)
+    );
+
+    if (!existingLogChannel) {
+      try {
+        await guild.channels.create({
+          name: "logs",
+          type: 0, // text channel
+          permissionOverwrites: [
+            {
+              id: guild.roles.everyone.id,
+              deny: ["SendMessages"],
+            },
+          ],
+        });
+        console.log(`📑 Logs channel created in ${guild.name}`);
+      } catch (err) {
+        console.warn(`⚠️ Could not create logs channel in ${guild.name}. Missing Permissions.`);
+      }
+    } else {
+      console.log(`ℹ️ Using existing logs channel in ${guild.name}: #${existingLogChannel.name}`);
     }
   });
 });
