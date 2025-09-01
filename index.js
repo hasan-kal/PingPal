@@ -30,6 +30,30 @@ for (const file of eventFiles) {
   }
 }
 
+// Load slash commands
+client.slashCommands = new Collection();
+const slashFiles = fs.readdirSync("./slashCommands").filter(file => file.endsWith(".js"));
+
+for (const file of slashFiles) {
+  const command = require(`./slashCommands/${file}`);
+  client.slashCommands.set(command.data.name, command);
+}
+
+client.on("interactionCreate", async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const command = client.slashCommands.get(interaction.commandName);
+
+  if (!command) return;
+
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: "❌ There was an error executing this command.", ephemeral: true });
+  }
+});
+
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
