@@ -6,8 +6,16 @@ const commands = [];
 const commandFiles = fs.readdirSync("./slashCommands").filter(file => file.endsWith(".js"));
 
 for (const file of commandFiles) {
-  const command = require(`./slashCommands/${file}`);
-  commands.push(command.data.toJSON());
+  try {
+    const command = require(`./slashCommands/${file}`);
+    if (!command.data) {
+      console.warn(`${file} is missing 'data' property!`);
+      continue;
+    }
+    commands.push(command.data.toJSON());
+  } catch (error) {
+    console.error(`Error loading ${file}:`, error);
+  }
 }
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
