@@ -87,8 +87,21 @@ client.once("ready", () => {
   });
 });
 
-// Add XP system
-function addXP(userId, amount = 10) {
+// Function to assign roles on level up
+function handleRoleRewards(member, level) {
+  const roleName = levelRoles[level];
+  if (!roleName) return;
+
+  const role = member.guild.roles.cache.find(r => r.name === roleName);
+  if (role && !member.roles.cache.has(role.id)) {
+    member.roles.add(role)
+      .then(() => member.send(`✨ You've been given the **${roleName}** role!`))
+      .catch(console.error);
+  }
+}
+
+// Add XP system with level-up notifications and role rewards
+function addXP(userId, amount = 10, message) {
   const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
 
   if (!user) {
@@ -96,6 +109,12 @@ function addXP(userId, amount = 10) {
   } else {
     const newXP = user.xp + amount;
     const newLevel = Math.floor(newXP / 100) + 1; // 100 XP per level
+
+    if (newLevel > user.level && message) {
+      message.channel.send(`🎉 Congrats <@${userId}>! You've reached Level ${newLevel}!`);
+      if (message.member) handleRoleRewards(message.member, newLevel);
+    }
+
     db.prepare("UPDATE users SET xp = ?, level = ? WHERE id = ?").run(newXP, newLevel, userId);
   }
 }
@@ -103,7 +122,7 @@ function addXP(userId, amount = 10) {
 // Event listener to give XP on each message
 client.on("messageCreate", (message) => {
   if (!message.author.bot) {
-    addXP(message.author.id);
+    addXP(message.author.id, 10, message);
   }
 });
 
