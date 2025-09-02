@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -12,6 +12,12 @@ module.exports = {
   async execute(interaction) {
     const msg = interaction.options.getString("message");
 
-    await interaction.reply({ content: msg });
+    const embed = new EmbedBuilder()
+      .setColor("#3498db")
+      .setTitle("📢 PingPal Says")
+      .setDescription(msg)
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
   },
 };
