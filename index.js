@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 
 require("dotenv").config();
@@ -111,7 +111,14 @@ function addXP(userId, amount = 10, message) {
     const newLevel = Math.floor(newXP / 100) + 1; // 100 XP per level
 
     if (newLevel > user.level && message) {
-      message.channel.send(`🎉 Congrats <@${userId}>! You've reached Level ${newLevel}!`);
+      const embed = new EmbedBuilder()
+        .setColor(0x00AE86)
+        .setTitle("🎉 Level Up!")
+        .setDescription(`<@${userId}> has reached **Level ${newLevel}**! Keep it up!`)
+        .setThumbnail(message.author.displayAvatarURL())
+        .setTimestamp();
+
+      message.channel.send({ embeds: [embed] });
       if (message.member) handleRoleRewards(message.member, newLevel);
     }
 

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,6 +13,12 @@ module.exports = {
     const sides = interaction.options.getInteger("sides");
     const result = Math.floor(Math.random() * sides) + 1;
 
-    await interaction.reply(`🎲 You rolled a ${result} (1-${sides})`);
+    const embed = new EmbedBuilder()
+      .setColor("#00FF00")
+      .setTitle("🎲 Dice Roll")
+      .setDescription(`You rolled a **${result}** (1-${sides})`)
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
   },
 };
