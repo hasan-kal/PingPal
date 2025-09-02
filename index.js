@@ -1,6 +1,8 @@
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const fs = require("fs");
+
 require("dotenv").config();
+const db = require("./database");
 
 const client = new Client({
   intents: [
@@ -83,6 +85,26 @@ client.once("ready", () => {
       console.log(`ℹ️ Using existing logs channel in ${guild.name}: #${existingLogChannel.name}`);
     }
   });
+});
+
+// Add XP system
+function addXP(userId, amount = 10) {
+  const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
+
+  if (!user) {
+    db.prepare("INSERT INTO users (id, xp, level) VALUES (?, ?, ?)").run(userId, amount, 1);
+  } else {
+    const newXP = user.xp + amount;
+    const newLevel = Math.floor(newXP / 100) + 1; // 100 XP per level
+    db.prepare("UPDATE users SET xp = ?, level = ? WHERE id = ?").run(newXP, newLevel, userId);
+  }
+}
+
+// Event listener to give XP on each message
+client.on("messageCreate", (message) => {
+  if (!message.author.bot) {
+    addXP(message.author.id);
+  }
 });
 
 client.login(process.env.DISCORD_TOKEN);
