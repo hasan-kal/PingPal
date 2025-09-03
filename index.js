@@ -87,6 +87,21 @@ client.once("ready", () => {
   });
 });
 
+// Define role rewards mapping
+const levelRoles = {
+  1: "Level 1",
+  5: "Level 5",
+  10: "Level 10",
+  15: "Level 15",
+  20: "Level 20",
+  25: "Level 25",
+  30: "Level 30",
+  35: "Level 35",
+  40: "Level 40",
+  45: "Level 45",
+  50: "Level 50",
+};
+
 // Function to assign roles on level up
 function handleRoleRewards(member, level) {
   const roleName = levelRoles[level];
@@ -111,6 +126,8 @@ function addXP(userId, amount = 10, message) {
     const newLevel = Math.floor(newXP / 100) + 1; // 100 XP per level
 
     if (newLevel > user.level && message) {
+      const roleName = levelRoles[newLevel] || null;
+
       const embed = new EmbedBuilder()
         .setColor(0x00AE86)
         .setTitle("🎉 Level Up!")
@@ -118,7 +135,12 @@ function addXP(userId, amount = 10, message) {
         .setThumbnail(message.author.displayAvatarURL())
         .setTimestamp();
 
+      if (roleName) {
+        embed.addFields({ name: "🏅 New Role", value: `You earned **${roleName}**!` });
+      }
+
       message.channel.send({ embeds: [embed] });
+
       if (message.member) handleRoleRewards(message.member, newLevel);
     }
 
