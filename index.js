@@ -160,7 +160,37 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get("/", (req, res) => res.send("PingPal is alive!"));
+app.get("/", (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>PingPal Status</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e2f;
+            color: #f5f5f5;
+            text-align: center;
+            margin-top: 50px;
+          }
+          h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #00ffcc;
+          }
+          p {
+            font-size: 1.2rem;
+            color: #dddddd;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>🤖 PingPal is running!</h1>
+        <p>Your Discord bot is online and working fine 🚀</p>
+      </body>
+    </html>
+  `);
+});
 
 app.listen(PORT, () => {
   console.log(`✅ Express server running on port ${PORT}`);
