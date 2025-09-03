@@ -155,4 +155,15 @@ client.on("messageCreate", (message) => {
   }
 });
 
+// Tiny Express server to keep bot alive
+const express = require("express");
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => res.send("PingPal is alive!"));
+
+app.listen(PORT, () => {
+  console.log(`✅ Express server running on port ${PORT}`);
+});
+
 client.login(process.env.DISCORD_TOKEN);
