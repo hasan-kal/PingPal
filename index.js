@@ -1,46 +1,39 @@
-const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, EmbedBuilder, Partials } = require("discord.js");
 const fs = require("fs");
-
 require("dotenv").config();
 const db = require("./database");
+const express = require("express");
 
+// Initialize client
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
   ],
+  partials: [Partials.Channel]
 });
 
+// Collections
 client.commands = new Collection();
+client.slashCommands = new Collection();
 
-// Load commands
+// Load prefix commands (optional)
 const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
 for (const file of commandFiles) {
   const command = require(`./commands/${file}`);
-  client.commands.set(command.name, command);
-}
-
-// Load events
-const eventFiles = fs.readdirSync("./events").filter(file => file.endsWith(".js"));
-for (const file of eventFiles) {
-  const event = require(`./events/${file}`);
-  if (event.once) {
-    client.once(event.name, (...args) => event.execute(...args, client));
-  } else {
-    client.on(event.name, (...args) => event.execute(...args, client));
-  }
+  if (command.name) client.commands.set(command.name, command);
 }
 
 // Load slash commands
-client.slashCommands = new Collection();
 const slashFiles = fs.readdirSync("./slashCommands").filter(file => file.endsWith(".js"));
-
 for (const file of slashFiles) {
   const command = require(`./slashCommands/${file}`);
-  client.slashCommands.set(command.data.name, command);
+  if (command.data && command.execute) client.slashCommands.set(command.data.name, command);
 }
 
+// Handle interactions
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -51,7 +44,6 @@ client.on("interactionCreate", async interaction => {
     await command.execute(interaction);
   } catch (error) {
     console.error(`❌ Error in /${interaction.commandName}:`, error);
-
     const safeMsg = "⚠️ Oops, something went wrong running that command.";
     if (interaction.deferred || interaction.replied) {
       await interaction.followUp({ content: safeMsg, ephemeral: true }).catch(() => {});
@@ -59,7 +51,7 @@ client.on("interactionCreate", async interaction => {
       await interaction.reply({ content: safeMsg, ephemeral: true }).catch(() => {});
     }
 
-    // Send details to logs channel for admins
+    // Send details to logs channel
     const logChannel = interaction.guild?.channels.cache.find(ch =>
       ["logs", "mod-logs", "admin-logs"].includes(ch.name)
     );
@@ -81,11 +73,41 @@ client.on("interactionCreate", async interaction => {
   }
 });
 
-client.once("ready", () => {
+// XP and level system
+function addXP(userId, amount = 10, message) {
+  const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
+
+  if (!user) {
+    db.prepare("INSERT INTO users (id, xp, level) VALUES (?, ?, ?)").run(userId, amount, 1);
+  } else {
+    const newXP = user.xp + amount;
+    const newLevel = Math.floor(newXP / 100) + 1;
+
+    if (newLevel > user.level && message) {
+      const embed = new EmbedBuilder()
+        .setColor(0xFFD700)
+        .setTitle("🎉 Level Up!")
+        .setDescription(`<@${userId}> has reached **Level ${newLevel}**! Keep it up!`)
+        .setThumbnail(message.author.displayAvatarURL())
+        .setTimestamp();
+
+      message.channel.send({ embeds: [embed] }).catch(() => {});
+    }
+
+    db.prepare("UPDATE users SET xp = ?, level = ? WHERE id = ?").run(newXP, newLevel, userId);
+  }
+}
+
+// Listen for messages to give XP
+client.on("messageCreate", (message) => {
+  if (!message.author.bot) addXP(message.author.id, 10, message);
+});
+
+// Ready event
+client.once("ready", async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
   client.guilds.cache.forEach(async guild => {
-    // Try to find an existing logs channel
     const existingLogChannel = guild.channels.cache.find(ch =>
       ["logs", "mod-logs", "admin-logs"].includes(ch.name)
     );
@@ -94,12 +116,9 @@ client.once("ready", () => {
       try {
         await guild.channels.create({
           name: "logs",
-          type: 0, // text channel
+          type: 0,
           permissionOverwrites: [
-            {
-              id: guild.roles.everyone.id,
-              deny: ["SendMessages"],
-            },
+            { id: guild.roles.everyone.id, deny: ["SendMessages"] },
           ],
         });
         console.log(`📑 Logs channel created in ${guild.name}`);
@@ -112,65 +131,18 @@ client.once("ready", () => {
   });
 });
 
-// Add XP system with level-up notifications and role rewards
-function addXP(userId, amount = 10, message) {
-  const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
-
-  if (!user) {
-    db.prepare("INSERT INTO users (id, xp, level) VALUES (?, ?, ?)").run(userId, amount, 1);
-  } else {
-    const newXP = user.xp + amount;
-    const newLevel = Math.floor(newXP / 100) + 1; // 100 XP per level
-
-    if (newLevel > user.level && message) {
-      const embed = new EmbedBuilder()
-        .setColor(0xFFD700)
-        .setTitle("🎉 Level Up!")
-        .setDescription(`<@${userId}> has reached **Level ${newLevel}**! Keep it up!`)
-        .setThumbnail(message.author.displayAvatarURL())
-        .setTimestamp();
-
-      message.channel.send({ embeds: [embed] });
-    }
-
-    db.prepare("UPDATE users SET xp = ?, level = ? WHERE id = ?").run(newXP, newLevel, userId);
-  }
-}
-
-// Event listener to give XP on each message
-client.on("messageCreate", (message) => {
-  if (!message.author.bot) {
-    addXP(message.author.id, 10, message);
-  }
-});
-
-// Tiny Express server to keep bot alive
-const express = require("express");
+// Express server for uptime
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 app.get("/", (req, res) => {
   res.send(`
     <html>
       <head>
         <title>PingPal Status</title>
         <style>
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e2f;
-            color: #f5f5f5;
-            text-align: center;
-            margin-top: 50px;
-          }
-          h1 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            color: #00ffcc;
-          }
-          p {
-            font-size: 1.2rem;
-            color: #dddddd;
-          }
+          body { font-family: 'Segoe UI', sans-serif; background-color: #1e1e2f; color: #f5f5f5; text-align:center; margin-top:50px; }
+          h1 { font-size:2.5rem; margin-bottom:20px; color:#00ffcc; }
+          p { font-size:1.2rem; color:#dddddd; }
         </style>
       </head>
       <body>
@@ -181,8 +153,10 @@ app.get("/", (req, res) => {
   `);
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Express server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Express server running on port ${PORT}`));
 
 client.login(process.env.DISCORD_TOKEN);
+
+// Catch unhandled errors
+process.on('unhandledRejection', console.error);
+process.on('uncaughtException', console.error);
