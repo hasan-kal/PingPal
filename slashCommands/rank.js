@@ -21,14 +21,14 @@ module.exports = {
 
     const xpForNext = user.level * 100; // 100 XP per level
     const embed = new EmbedBuilder()
-      .setColor(0x3498db)
+      .setColor(0x00AEEF)
       .setTitle(`📊 Rank of ${target.username}`)
-      .setThumbnail(target.displayAvatarURL())
+      .setThumbnail(target.displayAvatarURL({ dynamic: true }))
       .addFields(
-        { name: "Level", value: `${user.level}`, inline: true },
-        { name: "XP", value: `${user.xp} / ${xpForNext}`, inline: true }
+        { name: "🎯 Level", value: `${user.level}`, inline: true },
+        { name: "💬 XP", value: `${user.xp} / ${xpForNext}`, inline: true }
       )
-      .setFooter({ text: `Keep chatting to gain XP!` })
+      .setFooter({ text: "PingPal • Keep chatting to gain XP!", iconURL: interaction.client.user.avatarURL() })
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });
