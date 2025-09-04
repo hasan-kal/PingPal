@@ -13,9 +13,10 @@ module.exports = {
     const msg = interaction.options.getString("message");
 
     const embed = new EmbedBuilder()
-      .setColor("#3498db")
+      .setColor(0x00AEEF)
       .setTitle("📢 PingPal Says")
       .setDescription(msg)
+      .setFooter({ text: "PingPal • 2025", iconURL: interaction.client.user.avatarURL() })
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });
