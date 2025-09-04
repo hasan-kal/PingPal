@@ -22,7 +22,8 @@ module.exports = {
         { name: "/serverinfo", value: "🌍 Get info about the server" },
         { name: "/rank", value: "📊 View your current level and XP" },
         { name: "/avatar", value: "🖼️ Show the avatar of a user" },
-        { name: "/invite", value: "🔗 Get the invite link to add PingPal to other servers" }
+        { name: "/invite", value: "🔗 Get the invite link to add PingPal to other servers" },
+        { name: "/setup", value: "🛠️ Check if PingPal has proper permissions and role position in this server" }
       )
       .setFooter({ text: "PingPal • 2025", iconURL: interaction.client.user.avatarURL() })
       .setTimestamp();
