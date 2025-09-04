@@ -36,10 +36,10 @@ module.exports = {
         }
 
         return new EmbedBuilder()
-          .setColor(0xf1c40f)
+          .setColor(0x00AEEF)
           .setTitle(`🏆 ${interaction.guild.name} Leaderboard`)
           .setDescription(description)
-          .setFooter({ text: `Page ${currentPage} of ${totalPages} • Keep chatting to climb the ranks!` })
+          .setFooter({ text: `Page ${currentPage} of ${totalPages} • Keep chatting to climb the ranks!`, iconURL: interaction.client.user.avatarURL() })
           .setTimestamp();
       };
 

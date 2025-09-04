@@ -18,9 +18,11 @@ module.exports = {
     const url = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=${perms}&scope=bot%20applications.commands`;
 
     const embed = new EmbedBuilder()
-      .setTitle("Invite PingPal")
+      .setTitle("🔗 Invite PingPal")
       .setDescription(`[Click here to invite PingPal](${url})\nYou need **Manage Server** in the target server.`)
-      .setColor(0x00FFCC);
+      .setColor(0x00AEEF)
+      .setFooter({ text: "PingPal • 2025", iconURL: interaction.client.user.avatarURL() })
+      .setTimestamp();
 
     await interaction.reply({ embeds: [embed], ephemeral: true });
   },
