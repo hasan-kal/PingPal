@@ -1,5 +1,3 @@
-
-
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 module.exports = {
@@ -17,8 +15,13 @@ module.exports = {
         { name: "/say", value: "📢 Make the bot repeat your message" },
         { name: "/joke", value: "😂 Get a random joke" },
         { name: "/weather", value: "🌤️ Get weather info for a city" },
-        { name: "/profile", value: "👤 View your profile and XP" },
-        { name: "/leaderboard", value: "🏆 View the XP leaderboard" }
+        { name: "/leaderboard", value: "🏆 View the XP leaderboard" },
+        { name: "/roast", value: "🔥 Roast someone for fun" },
+        { name: "/ping", value: "🏓 Check the bot's latency" },
+        { name: "/userinfo", value: "👤 Get info about a user" },
+        { name: "/serverinfo", value: "🌍 Get info about the server" },
+        { name: "/rank", value: "📊 View your current level and XP" },
+        { name: "/avatar", value: "🖼️ Show the avatar of a user" }
       )
       .setFooter({ text: "PingPal Utility Bot • Built with ❤️ using discord.js" })
       .setTimestamp();
