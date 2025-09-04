@@ -44,14 +44,13 @@ client.on("interactionCreate", async interaction => {
     await command.execute(interaction);
   } catch (error) {
     console.error(`❌ Error in /${interaction.commandName}:`, error);
-    const safeMsg = "⚠️ Oops, something went wrong running that command.";
-    if (interaction.deferred || interaction.replied) {
-      await interaction.followUp({ content: safeMsg, ephemeral: true }).catch(() => {});
-    } else {
-      await interaction.reply({ content: safeMsg, ephemeral: true }).catch(() => {});
+
+    // Reply to user only if interaction is not already acknowledged
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: "⚠️ Something went wrong running that command.", ephemeral: true }).catch(() => {});
     }
 
-    // Send details to logs channel
+    // Send error details to logs channel
     const logChannel = interaction.guild?.channels.cache.find(ch =>
       ["logs", "mod-logs", "admin-logs"].includes(ch.name)
     );
