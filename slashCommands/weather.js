@@ -9,17 +9,16 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    const city = interaction.options.getString("city");
-    const apiKey = process.env.OPENWEATHER_API_KEY;
-    if (!apiKey) {
-      return interaction.reply({ content: "OpenWeather API key not configured.", ephemeral: true });
-    }
-
     await interaction.deferReply();
 
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
-
     try {
+      const city = interaction.options.getString("city");
+      const apiKey = process.env.OPENWEATHER_API_KEY;
+      if (!apiKey) {
+        return interaction.editReply({ content: "OpenWeather API key not configured.", ephemeral: true });
+      }
+
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -41,8 +40,13 @@ module.exports = {
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
-    } catch (e) {
-      await interaction.editReply({ content: `Could not fetch weather for **${city}**.` });
+    } catch (error) {
+      console.error(`❌ /weather error:`, error);
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ content: "⚠️ Could not fetch weather. Please try again.", ephemeral: true }).catch(() => {});
+      } else {
+        await interaction.reply({ content: "⚠️ Could not fetch weather. Please try again.", ephemeral: true }).catch(() => {});
+      }
     }
   },
 };
