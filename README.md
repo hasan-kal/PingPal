@@ -108,3 +108,7 @@ Invite PingPal to your server and try out commands like:
 
 ## 📜 License
 MIT License © 2025 Hasan
+
+## 📄 Legal
+- [Terms of Service](./TERMS_OF_SERVICE.md)
+- [Privacy Policy](./PRIVACY_POLICY.md)
