@@ -45,14 +45,39 @@ client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.slashCommands.get(interaction.commandName);
-
   if (!command) return;
 
   try {
     await command.execute(interaction);
   } catch (error) {
-    console.error(error);
-    await interaction.reply({ content: "❌ There was an error executing this command.", ephemeral: true });
+    console.error(`❌ Error in /${interaction.commandName}:`, error);
+
+    const safeMsg = "⚠️ Oops, something went wrong running that command.";
+    if (interaction.deferred || interaction.replied) {
+      await interaction.followUp({ content: safeMsg, ephemeral: true }).catch(() => {});
+    } else {
+      await interaction.reply({ content: safeMsg, ephemeral: true }).catch(() => {});
+    }
+
+    // Send details to logs channel for admins
+    const logChannel = interaction.guild?.channels.cache.find(ch =>
+      ["logs", "mod-logs", "admin-logs"].includes(ch.name)
+    );
+
+    if (logChannel && logChannel.isTextBased()) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("Command Error")
+        .setColor(0xff5555)
+        .addFields(
+          { name: "Command", value: `/${interaction.commandName}`, inline: true },
+          { name: "User", value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
+          { name: "Guild", value: interaction.guild?.name ?? "DM", inline: true }
+        )
+        .setDescription(`\`\`\`\n${String(error.stack || error).slice(0, 1900)}\n\`\`\``)
+        .setTimestamp();
+
+      logChannel.send({ embeds: [errorEmbed] }).catch(() => {});
+    }
   }
 });
 
