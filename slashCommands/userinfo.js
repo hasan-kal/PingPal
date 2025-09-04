@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -8,17 +8,18 @@ module.exports = {
   async execute(interaction) {
     const member = interaction.options.getMember("user") || interaction.member;
 
-    const embed = {
-      color: 0x0099ff,
-      title: `${member.user.tag} Info`,
-      thumbnail: { url: member.user.displayAvatarURL({ dynamic: true }) },
-      fields: [
-        { name: "User ID", value: member.id, inline: true },
-        { name: "Joined Discord", value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:D>`, inline: true },
-        { name: "Joined Server", value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:D>`, inline: true },
-        { name: "Roles", value: member.roles.cache.map(r => r.name).filter(r => r !== "@everyone").join(", ") || "None", inline: false }
-      ]
-    };
+    const embed = new EmbedBuilder()
+      .setTitle(`👤 ${member.user.tag} Info`)
+      .setColor(0x00AEEF)
+      .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+      .addFields(
+        { name: "🆔 User ID", value: member.id, inline: true },
+        { name: "📅 Joined Discord", value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:D>`, inline: true },
+        { name: "📅 Joined Server", value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:D>`, inline: true },
+        { name: "🎨 Roles", value: member.roles.cache.map(r => r.name).filter(r => r !== "@everyone").join(", ") || "None", inline: false }
+      )
+      .setFooter({ text: "PingPal • 2025", iconURL: interaction.client.user.avatarURL() })
+      .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });
   },

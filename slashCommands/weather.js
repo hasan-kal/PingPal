@@ -37,6 +37,7 @@ module.exports = {
           { name: "💨 Wind", value: `${wind.speed ?? "?"} m/s`, inline: true },
         )
         .setColor(0x00AEEF)
+        .setFooter({ text: "PingPal • Powered by OpenWeather", iconURL: interaction.client.user.avatarURL() })
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
