@@ -6,7 +6,7 @@ module.exports = {
     .setDescription("📖 Shows a list of available commands"),
   async execute(interaction) {
     const embed = new EmbedBuilder()
-      .setColor("#9b59b6")
+      .setColor(0x00AEEF)
       .setTitle("🤖 PingPal Help Menu")
       .setDescription("Here are the commands you can use with PingPal:")
       .addFields(
@@ -21,9 +21,10 @@ module.exports = {
         { name: "/userinfo", value: "👤 Get info about a user" },
         { name: "/serverinfo", value: "🌍 Get info about the server" },
         { name: "/rank", value: "📊 View your current level and XP" },
-        { name: "/avatar", value: "🖼️ Show the avatar of a user" }
+        { name: "/avatar", value: "🖼️ Show the avatar of a user" },
+        { name: "/invite", value: "🔗 Get the invite link to add PingPal to other servers" }
       )
-      .setFooter({ text: "PingPal Utility Bot • Built with ❤️ using discord.js" })
+      .setFooter({ text: "PingPal • 2025", iconURL: interaction.client.user.avatarURL() })
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed], ephemeral: true });
