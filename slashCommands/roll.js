@@ -14,9 +14,10 @@ module.exports = {
     const result = Math.floor(Math.random() * sides) + 1;
 
     const embed = new EmbedBuilder()
-      .setColor("#00FF00")
+      .setColor(0x00AEEF)
       .setTitle("🎲 Dice Roll")
       .setDescription(`You rolled a **${result}** (1-${sides})`)
+      .setFooter({ text: "PingPal • 2025", iconURL: interaction.client.user.avatarURL() })
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });

@@ -37,8 +37,11 @@ module.exports = {
       const target = interaction.options.getUser("user") ?? interaction.user;
       const roast = ROASTS[Math.floor(Math.random() * ROASTS.length)];
       const embed = new EmbedBuilder()
-        .setColor(0xFF6B6B)
-        .setDescription(`🔥 ${target} ${roast}`);
+        .setTitle("🔥 Roast Time!")
+        .setColor(0x00AEEF)
+        .setDescription(`${target} ${roast}`)
+        .setFooter({ text: "PingPal • 2025", iconURL: interaction.client.user.avatarURL() })
+        .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
