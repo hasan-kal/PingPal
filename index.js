@@ -112,34 +112,6 @@ client.once("ready", () => {
   });
 });
 
-// Define role rewards mapping
-const levelRoles = {
-  1: "Level 1",
-  5: "Level 5",
-  10: "Level 10",
-  15: "Level 15",
-  20: "Level 20",
-  25: "Level 25",
-  30: "Level 30",
-  35: "Level 35",
-  40: "Level 40",
-  45: "Level 45",
-  50: "Level 50",
-};
-
-// Function to assign roles on level up
-function handleRoleRewards(member, level) {
-  const roleName = levelRoles[level];
-  if (!roleName) return;
-
-  const role = member.guild.roles.cache.find(r => r.name === roleName);
-  if (role && !member.roles.cache.has(role.id)) {
-    member.roles.add(role)
-      .then(() => member.send(`✨ You've been given the **${roleName}** role!`))
-      .catch(console.error);
-  }
-}
-
 // Add XP system with level-up notifications and role rewards
 function addXP(userId, amount = 10, message) {
   const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
@@ -151,22 +123,14 @@ function addXP(userId, amount = 10, message) {
     const newLevel = Math.floor(newXP / 100) + 1; // 100 XP per level
 
     if (newLevel > user.level && message) {
-      const roleName = levelRoles[newLevel] || null;
-
       const embed = new EmbedBuilder()
-        .setColor(0x00AE86)
+        .setColor(0xFFD700)
         .setTitle("🎉 Level Up!")
         .setDescription(`<@${userId}> has reached **Level ${newLevel}**! Keep it up!`)
         .setThumbnail(message.author.displayAvatarURL())
         .setTimestamp();
 
-      if (roleName) {
-        embed.addFields({ name: "🏅 New Role", value: `You earned **${roleName}**!` });
-      }
-
       message.channel.send({ embeds: [embed] });
-
-      if (message.member) handleRoleRewards(message.member, newLevel);
     }
 
     db.prepare("UPDATE users SET xp = ?, level = ? WHERE id = ?").run(newXP, newLevel, userId);
