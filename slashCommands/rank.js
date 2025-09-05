@@ -13,7 +13,9 @@ module.exports = {
 
   async execute(interaction) {
     const target = interaction.options.getUser("user") || interaction.user;
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(target.id);
+    const user = db
+      .prepare("SELECT * FROM users WHERE user_id = ? AND guild_id = ?")
+      .get(target.id, interaction.guild.id);
 
     if (!user) {
       return interaction.reply({ content: `❌ ${target.username} has no XP yet.`, ephemeral: true });

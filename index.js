@@ -73,11 +73,11 @@ client.on("interactionCreate", async interaction => {
 });
 
 // XP and level system
-function addXP(userId, amount = 10, message) {
-  const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
+function addXP(userId, guildId, amount = 10, message) {
+  const user = db.prepare("SELECT * FROM users WHERE user_id = ? AND guild_id = ?").get(userId, guildId);
 
   if (!user) {
-    db.prepare("INSERT INTO users (id, xp, level) VALUES (?, ?, ?)").run(userId, amount, 1);
+    db.prepare("INSERT INTO users (user_id, guild_id, xp, level) VALUES (?, ?, ?, ?)").run(userId, guildId, amount, 1);
   } else {
     const newXP = user.xp + amount;
     const newLevel = Math.floor(newXP / 100) + 1;
@@ -86,20 +86,22 @@ function addXP(userId, amount = 10, message) {
       const embed = new EmbedBuilder()
         .setColor(0xFFD700)
         .setTitle("🎉 Level Up!")
-        .setDescription(`<@${userId}> has reached **Level ${newLevel}**! Keep it up!`)
+        .setDescription(`<@${userId}> has reached **Level ${newLevel}** in **${message.guild.name}**! Keep it up!`)
         .setThumbnail(message.author.displayAvatarURL())
         .setTimestamp();
 
       message.channel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    db.prepare("UPDATE users SET xp = ?, level = ? WHERE id = ?").run(newXP, newLevel, userId);
+    db.prepare("UPDATE users SET xp = ?, level = ? WHERE user_id = ? AND guild_id = ?").run(newXP, newLevel, userId, guildId);
   }
 }
 
 // Listen for messages to give XP
 client.on("messageCreate", (message) => {
-  if (!message.author.bot) addXP(message.author.id, 10, message);
+  if (!message.author.bot && message.guild) {
+    addXP(message.author.id, message.guild.id, 10, message);
+  }
 });
 
 // Ready event

@@ -6,9 +6,11 @@ const db = new Database("pingpal.db");
 // Create a users table if it doesn't exist
 db.prepare(`
   CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    guild_id TEXT NOT NULL,
     xp INTEGER DEFAULT 0,
-    level INTEGER DEFAULT 1
+    level INTEGER DEFAULT 1,
+    PRIMARY KEY (user_id, guild_id)
   )
 `).run();
 

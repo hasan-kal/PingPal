@@ -9,12 +9,11 @@ module.exports = {
     try {
       const itemsPerPage = 10;
 
-      const guildMemberIDs = interaction.guild.members.cache.map(member => member.id);
       const allUsers = db
         .prepare(
-          `SELECT * FROM users WHERE id IN (${guildMemberIDs.map(() => "?").join(",")}) ORDER BY xp DESC`
+          `SELECT * FROM users WHERE guild_id = ? ORDER BY level DESC, xp DESC`
         )
-        .all(...guildMemberIDs);
+        .all(interaction.guild.id);
 
       if (!allUsers.length) {
         return interaction.reply("📊 No users in this server have XP yet.");
@@ -30,7 +29,7 @@ module.exports = {
         let description = "";
         for (let i = 0; i < pageUsers.length; i++) {
           const userData = pageUsers[i];
-          const member = interaction.guild.members.cache.get(userData.id);
+          const member = interaction.guild.members.cache.get(userData.user_id);
           const username = member ? member.user.username : "Unknown User";
           description += `**#${startIndex + i + 1}** 🏅 ${username} — Level ${userData.level} (${userData.xp} XP)\n`;
         }
