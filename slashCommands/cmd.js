@@ -8,7 +8,7 @@ module.exports = {
   async execute(interaction) {
     const embed = new EmbedBuilder()
       .setTitle('📜 Command List')
-      .setDescription('Here is a quick list of some core commands:\n`ping, hello, repeat, help, invite, about`')
+      .setDescription('Here is a quick list of some core commands:\n`ping, hello, msg, help, invite, about`')
       .setColor(0x00AEEF)
       .setFooter({ text: 'PingPal • 2025', iconURL: interaction.client.user.avatarURL() })
       .setTimestamp();
