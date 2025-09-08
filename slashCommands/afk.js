@@ -17,16 +17,28 @@ module.exports = {
 
   async execute(interaction) {
     const reason = interaction.options.getString('reason') || 'AFK';
-
     const now = new Date().toISOString();
 
-    // Insert or update AFK status
+    // Insert or update AFK status in DB
     db.run(`
       INSERT INTO afk (user_id, guild_id, reason, since)
       VALUES (?, ?, ?, ?)
       ON CONFLICT(user_id, guild_id)
       DO UPDATE SET reason = ?, since = ?;
     `, [interaction.user.id, interaction.guild.id, reason, now, reason, now]);
+
+    // ✅ Change nickname to include [AFK]
+    try {
+      let member = interaction.member;
+      if (member && member.manageable) {
+        let oldNick = member.nickname || member.user.username;
+        if (!oldNick.startsWith("[AFK]")) {
+          await member.setNickname(`[AFK] ${oldNick}`);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update nickname for AFK:", err.message);
+    }
 
     const embed = new EmbedBuilder()
       .setTitle('💤 AFK Enabled')
