@@ -1,67 +1,60 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const db = require("../database");
+// slashCommands/rank.js
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const db = require('../database.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("rank")
-    .setDescription("Check your level and XP progress.")
-    .addUserOption(option =>
-      option.setName("user")
-        .setDescription("Check rank of another user")
-        .setRequired(false)
-    ),
+    .setName('rank')
+    .setDescription('Show your rank or another user\'s rank')
+    .addUserOption(option => option.setName('user').setDescription('User to view').setRequired(false)),
 
   async execute(interaction) {
-    try {
-      if (!interaction.guild) {
-        return interaction.reply({ content: "❌ This command must be used in a server.", ephemeral: true });
-      }
-
-      const target = interaction.options.getUser("user") || interaction.user;
-
-      const user = db
-        .prepare("SELECT * FROM users WHERE user_id = ? AND guild_id = ?")
-        .get(target.id, interaction.guild.id);
-
-      if (!user) {
-        return interaction.reply({ content: `❌ ${target.username} has no XP yet in this server.`, ephemeral: true });
-      }
-
-      const xpForNext = user.level * 100; // 100 XP per level (adjust if you used a different formula)
-      const embed = new EmbedBuilder()
-        .setColor(0xFFD700)
-        .setTitle(`📊 Rank of ${target.username}`)
-        .setThumbnail(target.displayAvatarURL({ dynamic: true }))
-        .addFields(
-          { name: "🎯 Level", value: `${user.level}`, inline: true },
-          { name: "💬 XP", value: `${user.xp} / ${xpForNext}`, inline: true }
-        )
-        .setFooter({ text: "PingPal • Keep chatting to gain XP!", iconURL: interaction.client.user.displayAvatarURL() })
-        .setTimestamp();
-
-      await interaction.reply({ embeds: [embed] });
-    } catch (err) {
-      console.error("Error in /rank:", err);
-      // notify admin logs channel but do not fail the interaction twice
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({ content: "⚠️ Something went wrong running that command.", ephemeral: true }).catch(() => {});
-      }
-      const logChannel = interaction.guild?.channels.cache.find(ch =>
-        ["logs", "mod-logs", "admin-logs"].includes(ch.name)
-      );
-      if (logChannel && logChannel.isTextBased()) {
-        const errEmbed = new EmbedBuilder()
-          .setTitle("Error: /rank")
-          .setColor(0xff5555)
-          .setDescription(`\`\`\`\n${String(err.stack || err).slice(0, 1900)}\n\`\`\``)
-          .addFields(
-            { name: "Guild", value: `${interaction.guild?.name} (${interaction.guild?.id})`, inline: true },
-            { name: "User", value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
-            { name: "Target", value: `${target.tag ?? target.username} (${target.id})`, inline: true }
-          )
-          .setTimestamp();
-        logChannel.send({ embeds: [errEmbed] }).catch(() => {});
-      }
+    const guildId = interaction.guild?.id;
+    if (!guildId) {
+      return interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
     }
-  }
+
+    const targetUser = interaction.options.getUser('user') || interaction.user;
+    const userId = targetUser.id;
+
+    try {
+      // ⚡ better-sqlite3 is synchronous, so no await needed
+      const row = db.get(
+        "SELECT xp, level FROM users WHERE user_id = ? AND guild_id = ?",
+        [userId, guildId]
+      );
+
+      const xp = row ? Number(row.xp || 0) : 0;
+      const level = row ? Number(row.level || 1) : 1;
+
+      const levelStart = (level - 1) * 100;
+      const levelEnd = level * 100;
+      const progress = Math.max(0, Math.min(100, xp - levelStart));
+      const toNext = Math.max(0, levelEnd - xp);
+
+      let displayName = `<@${userId}>`;
+      try {
+        const member = await interaction.guild.members.fetch(userId).catch(() => null);
+        if (member) displayName = member.displayName;
+      } catch {
+        // fallback
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle(`📊 Rank • ${displayName}`)
+        .addFields(
+          { name: 'Level', value: `${level}`, inline: true },
+          { name: 'Total XP', value: `${xp}`, inline: true },
+          { name: 'Progress', value: `${progress} / 100 XP\n(${toNext} XP to next level)`, inline: false },
+        )
+        .setColor(0x00AEEF)
+        .setTimestamp()
+        .setFooter({ text: 'PingPal • Rank' });
+
+      return interaction.reply({ embeds: [embed] });
+    } catch (err) {
+      console.error('❌ Error in /rank command:', err);
+      return interaction.reply({ content: '⚠️ Could not fetch rank. Please try again later.', ephemeral: true });
+    }
+  },
 };
