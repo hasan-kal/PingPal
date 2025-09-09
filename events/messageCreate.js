@@ -23,13 +23,29 @@ module.exports = {
           userId,
           guildId,
         ]);
-        message.channel.send(
+
+        // ✅ Remove [AFK] from nickname (or username if no nickname set)
+        try {
+          if (message.member && message.member.manageable) {
+            const currentName = message.member.nickname || message.author.username;
+            if (currentName.startsWith("[AFK]")) {
+              const newName = currentName.replace(/^\[AFK\]\s*/, "");
+              await message.member.setNickname(newName);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to remove AFK from nickname:", err.message);
+        }
+
+        // 👋 Notify the user AND the channel
+        await message.reply("👋 You’re no longer AFK.");
+        await message.channel.send(
           `✅ Welcome back <@${userId}>, your AFK status has been removed!`
         );
       }
 
       // Notify if mentioned users are AFK
-      message.mentions.users.forEach(async (user) => {
+      for (const user of message.mentions.users.values()) {
         const mentionedAfk = await db.get(
           "SELECT * FROM afk WHERE user_id = ? AND guild_id = ?",
           [user.id, guildId]
@@ -39,7 +55,7 @@ module.exports = {
             `💤 <@${user.id}> is currently AFK: ${mentionedAfk.reason}`
           );
         }
-      });
+      }
 
       // --- XP SYSTEM ---
       const xpToAdd = Math.floor(Math.random() * 10) + 5; // 5–15 XP per message
@@ -86,9 +102,7 @@ module.exports = {
         await command.execute(message, args);
       } catch (error) {
         console.error(error);
-        message.reply(
-          "❌ Oops! There was an error running that command."
-        );
+        message.reply("❌ Oops! There was an error running that command.");
       }
     } catch (err) {
       console.error("Message handling error:", err);
