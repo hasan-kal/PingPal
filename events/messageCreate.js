@@ -37,10 +37,9 @@ module.exports = {
           console.error("Failed to remove AFK from nickname:", err.message);
         }
 
-        // 👋 Notify the user AND the channel
-        await message.reply("👋 You’re no longer AFK.");
+        // 👋 Public message so everyone sees it
         await message.channel.send(
-          `✅ Welcome back <@${userId}>, your AFK status has been removed!`
+          `👋 <@${userId}> is no longer AFK! Welcome back 🎉`
         );
       }
 
