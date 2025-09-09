@@ -42,11 +42,12 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setTitle('💤 AFK Enabled')
-      .setDescription(`✅ You are now AFK: **${reason}**`)
+      .setDescription(`✅ <@${interaction.user.id}> is now AFK: **${reason}**`)
       .setColor(0x00AEEF)
       .setFooter({ text: 'PingPal • 2025', iconURL: interaction.client.user.avatarURL() })
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    // 🔹 Make this public so everyone sees it
+    await interaction.reply({ embeds: [embed] });
   }
 };
