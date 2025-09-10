@@ -11,55 +11,56 @@ module.exports = {
     const userId = message.author.id;
 
     try {
-      // --- 1. If the message author was AFK, remove it ---
-      const afk = db.get(
-        "SELECT * FROM afk WHERE user_id = ? AND guild_id = ?",
+      // --- XP SYSTEM ---
+      const xpToAdd = Math.floor(Math.random() * 10) + 5; // 5–15 XP per message
+      let user = db.get(
+        "SELECT * FROM users WHERE user_id = ? AND guild_id = ?",
         [userId, guildId]
       );
 
-      if (afk) {
-        // Delete from DB
-        db.run("DELETE FROM afk WHERE user_id = ? AND guild_id = ?", [
-          userId,
-          guildId,
-        ]);
-
-        // Restore nickname (remove [AFK] prefix)
-        try {
-          if (message.member && message.member.manageable) {
-            const currentName = message.member.nickname || message.author.username;
-            if (currentName.startsWith("[AFK]")) {
-              const newName = currentName.replace(/^\[AFK\]\s*/, "");
-              await message.member.setNickname(newName);
-            }
-          }
-        } catch (err) {
-          console.error("⚠️ Could not restore nickname:", err.message);
+      if (!user) {
+        db.run(
+          "INSERT INTO users (user_id, guild_id, xp, level) VALUES (?, ?, ?, ?)",
+          [userId, guildId, xpToAdd, 1]
+        );
+        user = { user_id: userId, guild_id: guildId, xp: xpToAdd, level: 1 };
+      } else {
+        const newXP = user.xp + xpToAdd;
+        const newLevel = Math.floor(newXP / 100) + 1; // 100 XP = 1 level
+        if (newLevel > user.level) {
+          const levelUpEmbed = new EmbedBuilder()
+            .setColor(0xffd700)
+            .setTitle("🎉 Level Up!")
+            .setDescription(
+              `Congrats <@${userId}>! You reached **Level ${newLevel}**!`
+            )
+            .setThumbnail(message.author.displayAvatarURL())
+            .setTimestamp();
+          message.channel.send({ embeds: [levelUpEmbed] });
         }
-
-        // Public “welcome back” message
-        await message.channel.send(
-          `👋 <@${userId}> welcome back! Your AFK status has been removed.`
+        db.run(
+          "UPDATE users SET xp = ?, level = ? WHERE user_id = ? AND guild_id = ?",
+          [newXP, newLevel, userId, guildId]
         );
       }
 
-      // --- 2. Check if any mentioned users are AFK ---
-      for (const user of message.mentions.users.values()) {
-        const mentionedAfk = db.get(
-          "SELECT * FROM afk WHERE user_id = ? AND guild_id = ?",
-          [user.id, guildId]
-        );
-        if (mentionedAfk) {
-          await message.channel.send(
-            `💤 <@${user.id}> is currently AFK: ${mentionedAfk.reason || "No reason given"}`
-          );
-        }
-      }
+      // --- PREFIX COMMANDS ---
+      const prefix = "!";
+      if (!message.content.startsWith(prefix)) return;
+      const args = message.content.slice(prefix.length).trim().split(/ +/);
+      const commandName = args.shift().toLowerCase();
 
-      // --- 3. (Keep your XP/level code here) ---
-      // not rewriting XP system since that part is already working for you
+      const command = message.client.commands.get(commandName);
+      if (!command) return;
+
+      try {
+        await command.execute(message, args);
+      } catch (error) {
+        console.error(error);
+        message.reply("❌ Oops! There was an error running that command.");
+      }
     } catch (err) {
-      console.error("❌ Error in messageCreate AFK handling:", err);
+      console.error("❌ Error in messageCreate:", err);
     }
   },
 };

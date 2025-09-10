@@ -26,17 +26,6 @@ db.prepare(`
   )
 `).run();
 
-// --- AFK table (AFK status tracking) ---
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS afk (
-    user_id TEXT NOT NULL,
-    guild_id TEXT NOT NULL,
-    reason TEXT,
-    since TEXT,
-    PRIMARY KEY (user_id, guild_id)
-  )
-`).run();
-
 console.log("✅ Database connected and all tables are ready.");
 
 // --- Helper functions (Promise-like style for consistency) ---
