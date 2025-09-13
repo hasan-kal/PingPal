@@ -1,9 +1,9 @@
 const Database = require("better-sqlite3");
 
-// Open or create the database file
+// Open or create database
 const db = new Database("pingpal.db");
 
-// --- Users table (XP & Levels, server-specific) ---
+// Users table for XP & levels (server-specific)
 db.prepare(`
   CREATE TABLE IF NOT EXISTS users (
     user_id TEXT NOT NULL,
@@ -14,7 +14,7 @@ db.prepare(`
   )
 `).run();
 
-// --- Tags table (Memory category) ---
+// Tags table for Memory category
 db.prepare(`
   CREATE TABLE IF NOT EXISTS tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,12 +26,23 @@ db.prepare(`
   )
 `).run();
 
-console.log("✅ Database connected and all tables are ready.");
+// AFK table
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS afk (
+    user_id TEXT NOT NULL,
+    guild_id TEXT NOT NULL,
+    reason TEXT,
+    since TEXT,
+    PRIMARY KEY (user_id, guild_id)
+  )
+`).run();
 
-// --- Helper functions (Promise-like style for consistency) ---
+console.log("✅ Database connected and tables ready.");
+
+// Helper functions
 module.exports = {
   db,
   run: (sql, params = []) => db.prepare(sql).run(params),
   get: (sql, params = []) => db.prepare(sql).get(params),
-  all: (sql, params = []) => db.prepare(sql).all(params),
+  all: (sql, params = []) => db.prepare(sql).all(params)
 };
