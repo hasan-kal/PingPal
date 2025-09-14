@@ -26,17 +26,6 @@ db.prepare(`
   )
 `).run();
 
-// AFK table
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS afk (
-    user_id TEXT NOT NULL,
-    guild_id TEXT NOT NULL,
-    reason TEXT,
-    since TEXT,
-    PRIMARY KEY (user_id, guild_id)
-  )
-`).run();
-
 console.log("✅ Database connected and tables ready.");
 
 // Helper functions
