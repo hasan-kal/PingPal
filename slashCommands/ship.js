@@ -1,0 +1,29 @@
+const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
+const fetch = require("node-fetch");
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName("ship")
+    .setDescription("Ship yourself with another user 💖")
+    .addUserOption(option =>
+      option.setName("user").setDescription("Who to ship with").setRequired(true)
+    ),
+
+  async execute(interaction) {
+    const target = interaction.options.getUser("user");
+    const userAvatar = interaction.user.displayAvatarURL({ extension: "png", size: 512 });
+    const targetAvatar = target.displayAvatarURL({ extension: "png", size: 512 });
+
+    try {
+      const response = await fetch(
+        `https://some-random-api.com/canvas/ship?avatar1=${userAvatar}&avatar2=${targetAvatar}`
+      );
+      const buffer = await response.arrayBuffer();
+      const file = new AttachmentBuilder(Buffer.from(buffer), { name: "ship.png" });
+      await interaction.reply({ files: [file] });
+    } catch (err) {
+      console.error("❌ Ship error:", err);
+      await interaction.reply({ content: "⚠️ Couldn't generate ship image.", ephemeral: true });
+    }
+  },
+};
