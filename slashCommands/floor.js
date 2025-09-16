@@ -1,23 +1,24 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
+const fetch = require("node-fetch");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("floor")
-    .setDescription("Put a user's avatar on the floor 😂")
-    .addUserOption(option =>
-      option.setName("user").setDescription("Whose avatar to use").setRequired(false)
-    ),
+    .setDescription("Send a 'floor gang' meme"),
 
   async execute(interaction) {
-    const target = interaction.options.getUser("user") || interaction.user;
-    const avatar = target.displayAvatarURL({ extension: "png", size: 512 });
-    const imageUrl = `https://some-random-api.com/canvas/floor?avatar=${avatar}`;
+    await interaction.deferReply();
 
-    const embed = new EmbedBuilder()
-      .setColor(0xffc107)
-      .setTitle(`🤣 ${target.username} is lying on the floor!`)
-      .setImage(imageUrl);
+    try {
+      const res = await fetch("https://api.popcat.xyz/floor");
+      const data = await res.buffer();
 
-    await interaction.reply({ embeds: [embed] });
+      const attachment = new AttachmentBuilder(data, { name: "floor.png" });
+
+      await interaction.editReply({ files: [attachment] });
+    } catch (error) {
+      console.error("Error in /floor:", error);
+      await interaction.editReply("❌ Could not generate floor image.");
+    }
   },
 };

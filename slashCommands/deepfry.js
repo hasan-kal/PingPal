@@ -1,24 +1,39 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+// Example deepfry.js
+const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
+const fetch = require('node-fetch');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("deepfry")
-    .setDescription("Deepfry a user's avatar")
+    .setName('deepfry')
+    .setDescription('Deepfry an image')
     .addUserOption(option =>
-      option.setName("user").setDescription("Whose avatar to deepfry").setRequired(false)
+      option.setName('user')
+        .setDescription('User whose avatar to deepfry')
+        .setRequired(false)
     ),
 
   async execute(interaction) {
-    const target = interaction.options.getUser("user") || interaction.user;
-    const avatar = target.displayAvatarURL({ extension: "png", size: 512 });
+    const user = interaction.options.getUser('user') || interaction.user;
+    const avatarURL = user.displayAvatarURL({ extension: 'png', size: 512 });
 
-    const imageUrl = `https://some-random-api.com/canvas/deepfry?avatar=${avatar}`;
+    try {
+      const response = await fetch(`https://nekobot.xyz/api/imagegen?type=deepfry&image=${encodeURIComponent(avatarURL)}`);
+      const data = await response.json();
 
-    const embed = new EmbedBuilder()
-      .setColor(0xffcc00)
-      .setTitle(`🔥 Deepfried Avatar of ${target.username}`)
-      .setImage(imageUrl);
+      if (!data || !data.message) {
+        return interaction.reply({ content: '❌ Failed to deepfry image.', ephemeral: true });
+      }
 
-    await interaction.reply({ embeds: [embed] });
-  },
+      const embed = new EmbedBuilder()
+        .setTitle(`🍟 Deepfried ${user.username}`)
+        .setImage(data.message) // API gives direct image URL
+        .setColor(0xffa500);
+
+      await interaction.reply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error(error);
+      interaction.reply({ content: '❌ Error deepfrying image.', ephemeral: true });
+    }
+  }
 };

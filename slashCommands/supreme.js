@@ -1,22 +1,28 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
+const fetch = require("node-fetch");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("supreme")
-    .setDescription("Generate a Supreme logo style image")
-    .addStringOption(option =>
-      option.setName("text").setDescription("The text to make Supreme").setRequired(true)
+    .setDescription("Generate a Supreme logo text")
+    .addStringOption(opt =>
+      opt.setName("text").setDescription("Text for the logo").setRequired(true)
     ),
 
   async execute(interaction) {
-    const text = encodeURIComponent(interaction.options.getString("text"));
-    const imageUrl = `https://some-random-api.com/canvas/supreme?text=${text}&dark=false`;
+    const text = interaction.options.getString("text");
+    await interaction.deferReply();
 
-    const embed = new EmbedBuilder()
-      .setColor(0xff0000)
-      .setTitle("🟥 Supreme Style")
-      .setImage(imageUrl);
+    try {
+      const res = await fetch(`https://api.popcat.xyz/supreme?text=${encodeURIComponent(text)}&dark=false`);
+      const data = await res.buffer();
 
-    await interaction.reply({ embeds: [embed] });
+      const attachment = new AttachmentBuilder(data, { name: "supreme.png" });
+
+      await interaction.editReply({ files: [attachment] });
+    } catch (error) {
+      console.error("Error in /supreme:", error);
+      await interaction.editReply("❌ Could not generate supreme logo.");
+    }
   },
 };

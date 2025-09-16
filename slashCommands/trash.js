@@ -1,23 +1,29 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
+const fetch = require("node-fetch");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("trash")
     .setDescription("Put a user's avatar in the trash 🗑️")
-    .addUserOption(option =>
-      option.setName("user").setDescription("The user to throw in trash").setRequired(true)
+    .addUserOption(opt =>
+      opt.setName("user").setDescription("User to trash").setRequired(true)
     ),
 
   async execute(interaction) {
-    const target = interaction.options.getUser("user");
-    const avatar = target.displayAvatarURL({ extension: "png", size: 512 });
-    const imageUrl = `https://some-random-api.com/canvas/trash?avatar=${avatar}`;
+    const user = interaction.options.getUser("user");
+    await interaction.deferReply();
 
-    const embed = new EmbedBuilder()
-      .setColor(0x999999)
-      .setTitle(`🗑️ ${target.username} is now in the trash!`)
-      .setImage(imageUrl);
+    try {
+      const avatar = user.displayAvatarURL({ format: "png", size: 512 });
+      const res = await fetch(`https://api.popcat.xyz/trash?image=${encodeURIComponent(avatar)}`);
+      const data = await res.buffer();
 
-    await interaction.reply({ embeds: [embed] });
+      const attachment = new AttachmentBuilder(data, { name: "trash.png" });
+
+      await interaction.editReply({ files: [attachment] });
+    } catch (error) {
+      console.error("Error in /trash:", error);
+      await interaction.editReply("❌ Could not generate trash image.");
+    }
   },
 };

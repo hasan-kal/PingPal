@@ -1,22 +1,28 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
+const fetch = require("node-fetch");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("supremedark")
-    .setDescription("Generate a dark Supreme logo image")
-    .addStringOption(option =>
-      option.setName("text").setDescription("The text to make Supreme Dark").setRequired(true)
+    .setDescription("Generate a Supreme logo (dark theme)")
+    .addStringOption(opt =>
+      opt.setName("text").setDescription("Text for the logo").setRequired(true)
     ),
 
   async execute(interaction) {
-    const text = encodeURIComponent(interaction.options.getString("text"));
-    const imageUrl = `https://some-random-api.com/canvas/supreme?text=${text}&dark=true`;
+    const text = interaction.options.getString("text");
+    await interaction.deferReply();
 
-    const embed = new EmbedBuilder()
-      .setColor(0x000000)
-      .setTitle("⬛ Supreme Dark Style")
-      .setImage(imageUrl);
+    try {
+      const res = await fetch(`https://api.popcat.xyz/supreme?text=${encodeURIComponent(text)}&dark=true`);
+      const data = await res.buffer();
 
-    await interaction.reply({ embeds: [embed] });
+      const attachment = new AttachmentBuilder(data, { name: "supreme_dark.png" });
+
+      await interaction.editReply({ files: [attachment] });
+    } catch (error) {
+      console.error("Error in /supremedark:", error);
+      await interaction.editReply("❌ Could not generate supreme dark logo.");
+    }
   },
 };

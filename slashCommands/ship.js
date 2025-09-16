@@ -1,25 +1,34 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
+const fetch = require("node-fetch");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("ship")
-    .setDescription("Ship yourself with another user 💖")
-    .addUserOption(option =>
-      option.setName("user").setDescription("Who to ship with").setRequired(true)
-    ),
+    .setDescription("Ship two users together ❤️")
+    .addUserOption(opt => opt.setName("user1").setDescription("First user").setRequired(true))
+    .addUserOption(opt => opt.setName("user2").setDescription("Second user").setRequired(true)),
 
   async execute(interaction) {
-    const target = interaction.options.getUser("user");
-    const userAvatar = interaction.user.displayAvatarURL({ extension: "png", size: 512 });
-    const targetAvatar = target.displayAvatarURL({ extension: "png", size: 512 });
+    const user1 = interaction.options.getUser("user1");
+    const user2 = interaction.options.getUser("user2");
+    await interaction.deferReply();
 
-    const imageUrl = `https://some-random-api.com/canvas/ship?avatar1=${userAvatar}&avatar2=${targetAvatar}`;
+    try {
+      const avatar1 = user1.displayAvatarURL({ format: "png", size: 512 });
+      const avatar2 = user2.displayAvatarURL({ format: "png", size: 512 });
 
-    const embed = new EmbedBuilder()
-      .setColor(0xff69b4)
-      .setTitle(`💘 ${interaction.user.username} ❤️ ${target.username}`)
-      .setImage(imageUrl);
+      const res = await fetch(`https://api.popcat.xyz/ship?user1=${encodeURIComponent(avatar1)}&user2=${encodeURIComponent(avatar2)}`);
+      const data = await res.buffer();
 
-    await interaction.reply({ embeds: [embed] });
+      const attachment = new AttachmentBuilder(data, { name: "ship.png" });
+
+      await interaction.editReply({
+        content: `💘 **${user1.username}** + **${user2.username}** = OTP ❤️`,
+        files: [attachment],
+      });
+    } catch (error) {
+      console.error("Error in /ship:", error);
+      await interaction.editReply("❌ Could not generate ship image.");
+    }
   },
 };

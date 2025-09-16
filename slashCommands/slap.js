@@ -5,33 +5,39 @@ const fetch = require("node-fetch");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("slap")
-    .setDescription("Slap another user 👋")
+    .setDescription("Slap someone with a funny image!")
     .addUserOption(option =>
-      option.setName("user")
-        .setDescription("The user you want to slap")
-        .setRequired(true)
+      option.setName("target").setDescription("User to slap").setRequired(true)
     ),
 
   async execute(interaction) {
-    const target = interaction.options.getUser("user");
-    const userAvatar = interaction.user.displayAvatarURL({ extension: "png", size: 512 });
-    const targetAvatar = target.displayAvatarURL({ extension: "png", size: 512 });
+    const target = interaction.options.getUser("target");
+
+    await interaction.deferReply();
 
     try {
-      const response = await fetch(
-        `https://some-random-api.com/canvas/slap?avatar1=${userAvatar}&avatar2=${targetAvatar}`
-      );
-      const buffer = await response.arrayBuffer();
+      // Example API (Neko API has slap endpoint)
+      const res = await fetch("https://nekos.life/api/v2/img/slap");
+      const data = await res.json();
 
-      const file = new AttachmentBuilder(Buffer.from(buffer), { name: "slap.png" });
+      if (!data.url) {
+        return interaction.editReply("❌ Could not fetch slap image.");
+      }
 
-      await interaction.reply({ files: [file] });
-    } catch (err) {
-      console.error("❌ Slap command error:", err);
-      await interaction.reply({
-        content: "⚠️ Couldn't generate the slap image right now. Try again later!",
-        ephemeral: true,
+      // Download the image and attach it
+      const imageResponse = await fetch(data.url);
+      const buffer = await imageResponse.arrayBuffer();
+      const attachment = new AttachmentBuilder(Buffer.from(buffer), {
+        name: "slap.png",
       });
+
+      await interaction.editReply({
+        content: `👋 ${interaction.user} slapped ${target}!`,
+        files: [attachment],
+      });
+    } catch (error) {
+      console.error("Error in /slap:", error);
+      await interaction.editReply("❌ Something went wrong. Please try again.");
     }
   },
 };

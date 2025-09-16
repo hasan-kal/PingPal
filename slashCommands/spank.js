@@ -1,25 +1,34 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
+const fetch = require("node-fetch");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("spank")
-    .setDescription("Spank another user 🍑")
-    .addUserOption(option =>
-      option.setName("user").setDescription("The user to spank").setRequired(true)
+    .setDescription("Spank someone 👀")
+    .addUserOption(opt =>
+      opt.setName("target").setDescription("User to spank").setRequired(true)
     ),
 
   async execute(interaction) {
-    const target = interaction.options.getUser("user");
-    const userAvatar = interaction.user.displayAvatarURL({ extension: "png", size: 512 });
-    const targetAvatar = target.displayAvatarURL({ extension: "png", size: 512 });
+    const target = interaction.options.getUser("target");
+    await interaction.deferReply();
 
-    const imageUrl = `https://some-random-api.com/canvas/spank?avatar1=${userAvatar}&avatar2=${targetAvatar}`;
+    try {
+      const res = await fetch("https://api.waifu.pics/sfw/spank");
+      const data = await res.json();
 
-    const embed = new EmbedBuilder()
-      .setColor(0xffa500)
-      .setTitle(`🍑 ${interaction.user.username} spanked ${target.username}!`)
-      .setImage(imageUrl);
+      const img = await fetch(data.url);
+      const buffer = await img.buffer();
 
-    await interaction.reply({ embeds: [embed] });
+      const attachment = new AttachmentBuilder(buffer, { name: "spank.png" });
+
+      await interaction.editReply({
+        content: `🍑 ${interaction.user} spanked ${target}!`,
+        files: [attachment],
+      });
+    } catch (error) {
+      console.error("Error in /spank:", error);
+      await interaction.editReply("❌ Could not fetch spank image.");
+    }
   },
 };
