@@ -1,5 +1,4 @@
-const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
-const fetch = require("node-fetch");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,15 +10,13 @@ module.exports = {
 
   async execute(interaction) {
     const text = encodeURIComponent(interaction.options.getString("text"));
+    const imageUrl = `https://some-random-api.com/canvas/fact?text=${text}`;
 
-    try {
-      const response = await fetch(`https://some-random-api.com/canvas/facts?text=${text}`);
-      const buffer = await response.arrayBuffer();
-      const file = new AttachmentBuilder(Buffer.from(buffer), { name: "facts.png" });
-      await interaction.reply({ files: [file] });
-    } catch (err) {
-      console.error("❌ Facts error:", err);
-      await interaction.reply({ content: "⚠️ Couldn't generate facts image.", ephemeral: true });
-    }
+    const embed = new EmbedBuilder()
+      .setColor(0x66ff66)
+      .setTitle("📜 Fact Check")
+      .setImage(imageUrl);
+
+    await interaction.reply({ embeds: [embed] });
   },
 };

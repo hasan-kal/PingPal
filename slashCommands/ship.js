@@ -1,5 +1,4 @@
-const { SlashCommandBuilder, AttachmentBuilder } = require("discord.js");
-const fetch = require("node-fetch");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,16 +13,13 @@ module.exports = {
     const userAvatar = interaction.user.displayAvatarURL({ extension: "png", size: 512 });
     const targetAvatar = target.displayAvatarURL({ extension: "png", size: 512 });
 
-    try {
-      const response = await fetch(
-        `https://some-random-api.com/canvas/ship?avatar1=${userAvatar}&avatar2=${targetAvatar}`
-      );
-      const buffer = await response.arrayBuffer();
-      const file = new AttachmentBuilder(Buffer.from(buffer), { name: "ship.png" });
-      await interaction.reply({ files: [file] });
-    } catch (err) {
-      console.error("❌ Ship error:", err);
-      await interaction.reply({ content: "⚠️ Couldn't generate ship image.", ephemeral: true });
-    }
+    const imageUrl = `https://some-random-api.com/canvas/ship?avatar1=${userAvatar}&avatar2=${targetAvatar}`;
+
+    const embed = new EmbedBuilder()
+      .setColor(0xff69b4)
+      .setTitle(`💘 ${interaction.user.username} ❤️ ${target.username}`)
+      .setImage(imageUrl);
+
+    await interaction.reply({ embeds: [embed] });
   },
 };
