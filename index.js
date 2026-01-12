@@ -158,6 +158,11 @@ app.listen(PORT, () => console.log(`✅ Express server running on port ${PORT}`)
 
 client.login(process.env.DISCORD_TOKEN);
 
+// Heartbeat log to keep Render service alive
+setInterval(() => {
+  console.log("💓 PingPal heartbeat: service alive");
+}, 1000 * 60 * 5); // every 5 minutes
+
 // Catch unhandled errors
 process.on('unhandledRejection', console.error);
 process.on('uncaughtException', console.error);
