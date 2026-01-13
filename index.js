@@ -154,6 +154,11 @@ app.get("/", (req, res) => {
   `);
 });
 
+// Handle HEAD requests for uptime monitoring (UptimeRobot free tier)
+app.head("/", (req, res) => {
+  res.status(200).end();
+});
+
 app.listen(PORT, () => console.log(`✅ Express server running on port ${PORT}`));
 
 client.login(process.env.DISCORD_TOKEN);
